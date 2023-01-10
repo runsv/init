@@ -261,15 +261,35 @@ static int spawn_svc ( const char * name )
 static int find_by_pid ( const pid_t pid )
 {
   int i = 0 ;
-  /*
-  const int fd = open ( SVC_ROOT, O_RDONLY | O_CLOEXEC | O_PATH ) ;
-  if ( fstatat ( fd, name, & sb, 0 ) ) { return -2 ; }
-  */
 
   for ( i = 0 ; i <= maxidx ; ++ i ) {
     if ( pid == svc [ i ] . pid ) {
       return i ;
       break ;
+    }
+  }
+
+  return -1 ;
+}
+
+static int find_by_name ( const char * name )
+{
+  struct stat sb ;
+  const int dirfd = open ( SVC_ROOT, O_RDONLY | O_CLOEXEC | O_PATH ) ;
+
+  if ( 0 > dirfd ) { return -2 ; }
+
+  if ( fstatat ( dirfd, name, & sb, 0 ) ) {
+    return -3 ;
+  } else if ( S_ISREG ( sb . st_mode ) && ( 00100 & sb . st_mode ) ) {
+    int i ;
+
+    for ( i = 0 ; i <= maxidx ; ++ i ) {
+      if ( sb . st_dev == svc [ i ] . dev && sb . st_ino == svc [ i ] . ino ) {
+        /* found the corresponding array element */
+        return i ;
+        break ;
+      }
     }
   }
 
@@ -650,6 +670,10 @@ int main ( const int argc, char ** argv )
           } else if ( strcmp ( "kexec", buf ) == 0 ) {
             sys_shutdown ( RB_KEXEC ) ;
           } else if ( strcmp ( "reexec", buf ) == 0 ) {
+          } else if ( strcmp ( "reload", buf ) == 0 ) {
+          } else if ( strncmp ( "stop", buf, 4 ) == 0 ) {
+          } else if ( strncmp ( "start", buf, 5 ) == 0 ) {
+          } else if ( strncmp ( "restart", buf, 7 ) == 0 ) {
           }
         }
       }
