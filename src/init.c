@@ -117,7 +117,7 @@ static pid_t xfork ( void )
   return p ;
 }
 
-void opendevconsole ( void )
+static void open_console ( void )
 {
   const int fd = open ( "/dev/console", O_RDWR | O_NOCTTY ) ;
 
@@ -127,6 +127,38 @@ void opendevconsole ( void )
     (void) dup2 ( fd, 2 ) ;
     if ( 2 < fd ) { (void) close_fd ( fd ) ; }
   }
+}
+
+/* change the active virtual console */
+static int chvt ( int vt )
+{
+#if defined (OSLinux)
+  int fd ;
+
+  vt = ( 0 < vt && 12 >= vt ) ? vt : 1 ;
+  fd = open ( "/dev/console", O_RDONLY ) ;
+
+  if ( 0 > fd ) { return -1 ; }
+  else {
+    char bytes [ 2 ] = { 0 } ;
+    bytes [ 0 ] = 11 ;
+    bytes [ 1 ] = (char) vt ;
+    (void) ioctl ( fd, TIOCLINUX, bytes ) ;
+    (void) close_fd ( fd ) ;
+  }
+
+  fd = open ( "/dev/tty0", O_RDONLY ) ;
+
+  if ( 0 <= fd ) {
+    int i = ioctl ( fd, VT_ACTIVATE, vt ) ;
+
+    if ( 0 == i ) { i += ioctl ( fd, VT_WAITACTIVE, vt ) ; }
+    (void) close_fd ( fd ) ;
+    return i ;
+  }
+#endif
+
+  return -1 ;
 }
 
 /* reap terminated child/sub processes with waitpid(2) */
