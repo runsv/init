@@ -109,7 +109,7 @@ static pid_t xfork ( void )
 {
   pid_t p = 0 ;
 
-  while ( 0 > ( p = fork () ) && ENOSYS != errno ) {
+  while ( ( 0 > ( p = fork () ) ) && ( ENOSYS != errno ) ) {
     /* sleep a few seconds and try again */
     do_sleep ( 5, 0 ) ;
   }
@@ -215,6 +215,7 @@ static int run_cmd ( char * cmd, ... )
     }
     */
 
+    (void) setsid () ;
     /* opendevconsole() ? */
     (void) execve ( cmd, argv, env ) ;
     perror ( "execve() failed" ) ;
@@ -231,6 +232,7 @@ static pid_t spawn ( const char * path )
   const pid_t pid = xfork () ;
 
   if ( 0 == pid ) {
+    (void) setsid () ;
     (void) execve ( path, av, env ) ;
     exit ( 127 ) ;
   }
@@ -278,6 +280,7 @@ static int spawn_svc ( const char * name )
   pid = xfork () ;
 
   if ( 0 == pid ) {
+    (void) setsid () ;
     (void) fexecve ( fd, av, env ) ;
     (void) close_fd ( dirfd ) ;
     (void) close_fd ( fd ) ;
@@ -470,8 +473,9 @@ static void fork_and_reboot ( const int cmd )
   const pid_t pid = xfork () ;
 
   if ( 0 == pid ) {
+    (void) setsid () ;
     (void) reboot ( cmd ) ;
-    exit ( 0 ) ;
+    exit ( 127 ) ;
   } else if ( 0 < pid ) {
     pid_t p ;
 
