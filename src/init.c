@@ -56,7 +56,7 @@ static struct service {
   time_t started_at ;
 } svc [ SVC_LEN ] ;
 
-static int maxidx = 0 ;
+static size_t maxidx = 0 ;
 static const char * pname = "init" ;
 
 static size_t strcopy ( char * dest, const char * src, const size_t siz )
@@ -99,7 +99,7 @@ static void do_sleep ( long int s, long int m )
     ts . tv_sec = s ;
     ts . tv_nsec = m ;
 
-    while ( 0 > nanosleep ( & ts, & rem ) && EINTR == errno )
+    while ( ( 0 > nanosleep ( & ts, & rem ) ) && ( EINTR == errno ) )
     { ts = rem ; }
   }
 }
@@ -203,9 +203,8 @@ static int run_cmd ( char * cmd, ... )
     } while ( ( 0 > p ) && ( EINTR == errno ) ) ;
   } else if ( 0 == pid ) {
     /* child */
-    char * env [ 3 ] = {
+    char * env [ 2 ] = {
       "PATH=" PATH,
-      (char *) NULL,
       (char *) NULL,
     } ;
 
@@ -367,19 +366,28 @@ static int search_svc_file ( const char * base, const int idx,
   return r ;
 }
 
-static int add_svc ( struct stat * sp, const char * name )
+static size_t add_svc ( struct stat * sp, const char * name )
 {
-  int i = maxidx ;
+  size_t i = maxidx ;
 
   if ( 0 <= i && SVC_LEN > i ) {
     svc [ i ] . dev = sp -> st_dev ;
     svc [ i ] . ino = sp -> st_ino ;
     svc [ i ] . pid = spawn_svc ( name ) ;
     svc [ i ] . started_at = time ( NULL ) ;
-    ++ maxidx ;
+
+    if ( ( 1 + i ) < SVC_LEN ) {
+      ++ maxidx ;
+    }
+  } else if ( 0 > i ) {
+    maxidx = i = 0 ;
+  } else if ( SVC_LEN <= i ) {
+    maxidx = i = SVC_LEN - 1 ;
+    (void) fprintf ( stderr, "%s: Cannot add more services\n", pname ) ;
+    (void) fflush ( stderr ) ;
   }
 
-  return maxidx ;
+  return i ;
 }
 
 static void setup_svc ( const char * base )
@@ -415,9 +423,32 @@ static void check_pid ( const pid_t pid )
     char buf [ 1 + NAME_MAX ] = { 0 } ;
 
     if ( 0 == search_svc_file ( SVC_ROOT, idx, buf, sizeof ( buf ) - 1 ) ) {
+      /* Don't respawn too fast */
+      do_sleep ( 1, 0 ) ;
       svc [ idx ] . pid = spawn_svc ( buf ) ;
     }
   }
+}
+
+static void kill_all_svc ( void )
+{
+  size_t i ;
+
+  for ( i = 0 ; i <= maxidx ; ++ i ) {
+    const pid_t pid = svc [ i ] . pid ;
+
+    if ( 1 < pid && 0 == kill ( pid, 0 ) ) {
+      (void) kill ( pid, SIGTERM ) ;
+      (void) kill ( pid, SIGCONT ) ;
+    }
+  }
+}
+
+static void reload_svc_dir ( const char * base )
+{
+  kill_all_svc () ;
+  maxidx = 0 ;
+  setup_svc ( base ) ;
 }
 
 static void child_handler ( void )
@@ -598,11 +629,13 @@ int main ( const int argc, char ** argv )
   /*
   if ( 1 < getpid () ) {
     (void) fprintf ( stderr, "%s: must run as process #1\n", pname ) ;
+    (void) fflush ( stderr ) ;
     return 100 ;
   }
 
   if ( 0 < getuid () || 0 < geteuid () ) {
     (void) fprintf ( stderr, "%s: must be super user\n", pname ) ;
+    (void) fflush ( stderr ) ;
     return 100 ;
   }
   */
@@ -613,9 +646,6 @@ int main ( const int argc, char ** argv )
   (void) chdir ( "/" ) ;
   (void) sethostname ( "darkstar", 8 ) ;
   (void) setenv ( "PATH", PATH, 1 ) ;
-  (void) run_cmd ( STAGE1, STAGE1 ) ;
-  setup_svc ( SVC_ROOT ) ;
-  (void) spawn ( STAGE2 ) ;
 
   if ( pipe ( sfd ) ) {
     perror ( "pipe() failed" ) ;
@@ -626,12 +656,19 @@ int main ( const int argc, char ** argv )
   (void) fcntl ( sfd [ 0 ], F_SETFL, O_NONBLOCK ) ;
   (void) fcntl ( sfd [ 1 ], F_SETFL, O_NONBLOCK ) ;
   sig_fd = sfd [ 1 ] ;
+  (void) run_cmd ( STAGE1, STAGE1 ) ;
+
   fifo_fd = open_fifo ( INIT_FIFO ) ;
   (void) fcntl ( fifo_fd, F_SETFL, O_NONBLOCK ) ;
   pfd [ 0 ] . fd = sfd [ 0 ] ;
   pfd [ 0 ] . events = POLLIN ;
   pfd [ 1 ] . fd = fifo_fd ;
   pfd [ 1 ] . events = POLLIN ;
+
+  setup_sigs () ;
+  setup_kb () ;
+  setup_svc ( SVC_ROOT ) ;
+  (void) spawn ( STAGE2 ) ;
 
   /* main event loop */
   while ( 1 ) {
