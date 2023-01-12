@@ -74,6 +74,22 @@ static size_t strcopy ( char * dest, const char * src, const size_t siz )
   return i ;
 }
 
+static int sig_block_all ( void )
+{
+  sigset_t ss ;
+
+  (void) sigfillset ( & ss ) ;
+  return sigprocmask ( SIG_SETMASK, & ss, NULL ) ;
+}
+
+static int sig_unblock_all ( void )
+{
+  sigset_t ss ;
+
+  (void) sigemptyset ( & ss ) ;
+  return sigprocmask ( SIG_SETMASK, & ss, NULL ) ;
+}
+
 static int close_fd ( const int fd )
 {
   if ( 0 <= fd ) {
@@ -750,6 +766,8 @@ int main ( const int argc, char ** argv )
           }
         }
       }
+    }
+#if 0
     } else if ( 0 == r ) {
       /* poll() timed out. Cannot happen since the poll() interval
        * is negative.
@@ -764,6 +782,7 @@ int main ( const int argc, char ** argv )
         continue ;
       }
     }
+#endif
   } /* while */
 
   return 0 ;
