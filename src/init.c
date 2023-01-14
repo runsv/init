@@ -231,6 +231,7 @@ static int run_cmd ( char * cmd, ... )
     }
     */
 
+    (void) sig_unblock_all () ;
     (void) setsid () ;
     /* opendevconsole() ? */
     (void) execve ( cmd, argv, env ) ;
@@ -248,6 +249,7 @@ static pid_t spawn ( const char * path )
   const pid_t pid = xfork () ;
 
   if ( 0 == pid ) {
+    (void) sig_unblock_all () ;
     (void) setsid () ;
     (void) execve ( path, av, env ) ;
     exit ( 127 ) ;
@@ -296,6 +298,7 @@ static int spawn_svc ( const char * name )
   pid = xfork () ;
 
   if ( 0 == pid ) {
+    (void) sig_unblock_all () ;
     (void) setsid () ;
     (void) fexecve ( fd, av, env ) ;
     (void) close_fd ( dirfd ) ;
@@ -489,7 +492,10 @@ static void fork_and_reboot ( const int cmd )
   const pid_t pid = xfork () ;
 
   if ( 0 == pid ) {
+    /*
+    (void) sig_unblock_all () ;
     (void) setsid () ;
+    */
     (void) reboot ( cmd ) ;
     exit ( 127 ) ;
   } else if ( 0 < pid ) {
@@ -573,6 +579,11 @@ static int open_fifo ( const char * path )
   return fd ;
 }
 
+static void pseudo_sighandler ( const int sig )
+{
+  ;
+}
+
 /* restore default dispostions for all signals (except SIGCHLD) */
 static void reset_sigs ( void )
 {
@@ -591,7 +602,7 @@ static void reset_sigs ( void )
     }
   }
 
-  //sa . sa_handler = pseudo_sighand ;
+  sa . sa_handler = pseudo_sighandler ;
   (void) sigaction ( SIGCHLD, & sa, NULL ) ;
 
   /* unblock all signals */
@@ -666,6 +677,7 @@ int main ( const int argc, char ** argv )
   (void) chdir ( "/" ) ;
   (void) sethostname ( "darkstar", 8 ) ;
   (void) setenv ( "PATH", PATH, 1 ) ;
+  (void) sig_block_all () ;
 
   if ( pipe ( sfd ) ) {
     perror ( "pipe() failed" ) ;
@@ -687,6 +699,7 @@ int main ( const int argc, char ** argv )
 
   setup_sigs () ;
   setup_kb () ;
+  (void) sig_unblock_all () ;
   setup_svc ( SVC_ROOT ) ;
   (void) spawn ( STAGE2 ) ;
 
