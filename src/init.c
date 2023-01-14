@@ -30,6 +30,10 @@
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/reboot.h>
+/*
+#include <bits/types.h>
+#include <bits/time.h>
+*/
 #include "os.h"
 
 #if defined (OSLinux)
@@ -50,6 +54,7 @@
 extern char ** environ ;
 
 static struct service {
+  unsigned int flags ;
   dev_t dev ;
   ino_t ino ;
   pid_t pid ;
@@ -573,6 +578,8 @@ static int open_fifo ( const char * path )
   if ( 0 > fd ) {
     ;
   } else {
+    (void) fcntl ( fd, F_SETFD, FD_CLOEXEC ) ;
+    (void) fcntl ( fd, F_SETFL, O_NONBLOCK ) ;
     (void) fchmod ( fd, 00600 ) ;
   }
 
@@ -671,13 +678,13 @@ int main ( const int argc, char ** argv )
   }
   */
 
+  (void) sig_block_all () ;
   (void) setsid () ;
   (void) setpgid ( 0, 0 ) ;
   (void) umask ( 0022 ) ;
   (void) chdir ( "/" ) ;
   (void) sethostname ( "darkstar", 8 ) ;
   (void) setenv ( "PATH", PATH, 1 ) ;
-  (void) sig_block_all () ;
 
   if ( pipe ( sfd ) ) {
     perror ( "pipe() failed" ) ;
@@ -691,7 +698,6 @@ int main ( const int argc, char ** argv )
   (void) run_cmd ( STAGE1, STAGE1 ) ;
 
   fifo_fd = open_fifo ( INIT_FIFO ) ;
-  (void) fcntl ( fifo_fd, F_SETFL, O_NONBLOCK ) ;
   pfd [ 0 ] . fd = sfd [ 0 ] ;
   pfd [ 0 ] . events = POLLIN ;
   pfd [ 1 ] . fd = fifo_fd ;
@@ -699,9 +705,9 @@ int main ( const int argc, char ** argv )
 
   setup_sigs () ;
   setup_kb () ;
-  (void) sig_unblock_all () ;
   setup_svc ( SVC_ROOT ) ;
   (void) spawn ( STAGE2 ) ;
+  (void) sig_unblock_all () ;
 
   /* main event loop */
   while ( 1 ) {
@@ -735,7 +741,6 @@ int main ( const int argc, char ** argv )
               /* reopen the init fifo */
               (void) close_fd ( fifo_fd ) ;
               fifo_fd = open_fifo ( INIT_FIFO ) ;
-              (void) fcntl ( fifo_fd, F_SETFL, O_NONBLOCK ) ;
               pfd [ 1 ] . fd = fifo_fd ;
               break ;
             case SIGUSR2 :
@@ -749,7 +754,9 @@ int main ( const int argc, char ** argv )
               break ;
           }
         }
-      } else if ( pfd [ 1 ] . revents & POLLIN ) {
+      }
+
+      if ( pfd [ 1 ] . revents & POLLIN ) {
         /* input on the control fifo */
         int n ;
         char buf [ 512 ] = { 0 } ;
@@ -761,7 +768,6 @@ int main ( const int argc, char ** argv )
             /* reopen the control fifo */
             (void) close_fd ( fifo_fd ) ;
             fifo_fd = open_fifo ( INIT_FIFO ) ;
-            (void) fcntl ( fifo_fd, F_SETFL, O_NONBLOCK ) ;
             pfd [ 1 ] . fd = fifo_fd ;
           } else if ( strcmp ( "reboot", buf ) == 0 ) {
             sys_shutdown ( RB_AUTOBOOT ) ;
