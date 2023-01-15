@@ -332,26 +332,28 @@ static int find_by_pid ( const pid_t pid )
 
 static int find_by_name ( const char * name )
 {
+  int r = -1 ;
   struct stat sb ;
   const int dirfd = open ( SVC_ROOT, O_RDONLY | O_CLOEXEC | O_PATH ) ;
 
   if ( 0 > dirfd ) { return -2 ; }
 
   if ( fstatat ( dirfd, name, & sb, 0 ) ) {
-    return -3 ;
+    r = -3 ;
   } else if ( S_ISREG ( sb . st_mode ) && ( 00100 & sb . st_mode ) ) {
     int i ;
 
     for ( i = 0 ; i <= maxidx ; ++ i ) {
       if ( sb . st_dev == svc [ i ] . dev && sb . st_ino == svc [ i ] . ino ) {
         /* found the corresponding array element */
-        return i ;
+        r = i ;
         break ;
       }
     }
   }
 
-  return -1 ;
+  (void) close_fd ( dirfd ) ;
+  return r ;
 }
 
 static int search_svc_file ( const char * base, const int idx,
@@ -388,6 +390,7 @@ static int search_svc_file ( const char * base, const int idx,
     }
 
     (void) closedir ( dp ) ;
+    (void) close_fd ( dfd ) ;
   }
 
   return r ;
@@ -440,6 +443,7 @@ static void setup_svc ( const char * base )
   }
 
   (void) closedir ( dp ) ;
+  (void) close_fd ( dfd ) ;
 }
 
 static void check_pid ( const pid_t pid )
