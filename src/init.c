@@ -221,6 +221,7 @@ static int run_cmd ( char * cmd, ... )
 
     do {
       p = waitpid ( pid, & w, 0 ) ;
+      if ( p == pid ) { break ; }
     } while ( ( 0 > p ) && ( EINTR == errno ) ) ;
   } else if ( 0 == pid ) {
     /* child */
@@ -540,7 +541,7 @@ static void sys_shutdown ( const int cmd )
       break ;
   }
 
-  (void) run_cmd ( STAGE3, STAGE3 ) ;
+  (void) run_cmd ( STAGE3, STAGE3, what ) ;
   reap () ;
   sync () ;
   (void) puts ( "Sending all processes the TERM signal...\n" ) ;
