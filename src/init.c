@@ -194,7 +194,7 @@ static void reap ( void )
   return ;
 }
 
-static int run_cmd ( char * cmd, ... )
+static int run ( char * cmd, ... )
 {
   int i ;
   pid_t pid ;
@@ -402,6 +402,7 @@ static size_t add_svc ( struct stat * sp, const char * name )
   size_t i = maxidx ;
 
   if ( 0 <= i && SVC_LEN > i ) {
+    svc [ i ] . flags = 0 ;
     svc [ i ] . dev = sp -> st_dev ;
     svc [ i ] . ino = sp -> st_ino ;
     svc [ i ] . pid = spawn_svc ( name ) ;
@@ -541,7 +542,7 @@ static void sys_shutdown ( const int cmd )
       break ;
   }
 
-  (void) run_cmd ( STAGE3, STAGE3, what ) ;
+  (void) run ( STAGE3, STAGE3, what ) ;
   reap () ;
   sync () ;
   (void) puts ( "Sending all processes the TERM signal...\n" ) ;
@@ -553,7 +554,7 @@ static void sys_shutdown ( const int cmd )
   (void) kill ( -1, SIGKILL ) ;
   reap () ;
   sync () ;
-  (void) run_cmd ( STAGE4, STAGE4, what ) ;
+  (void) run ( STAGE4, STAGE4, what ) ;
   reap () ;
   sync () ;
 
@@ -700,7 +701,7 @@ int main ( const int argc, char ** argv )
   (void) fcntl ( sfd [ 0 ], F_SETFL, O_NONBLOCK ) ;
   (void) fcntl ( sfd [ 1 ], F_SETFL, O_NONBLOCK ) ;
   sig_fd = sfd [ 1 ] ;
-  (void) run_cmd ( STAGE1, STAGE1 ) ;
+  (void) run ( STAGE1, STAGE1 ) ;
 
   fifo_fd = open_fifo ( INIT_FIFO ) ;
   pfd [ 0 ] . fd = sfd [ 0 ] ;

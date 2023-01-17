@@ -46,8 +46,8 @@ static void sig_conf ( void )
 
 int main ( void )
 {
-  sig_conf () ;
   got_sig = 0 ;
+  sig_conf () ;
 
   while ( 0 == got_sig ) {
     (void) pause () ;
