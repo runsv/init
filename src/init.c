@@ -520,9 +520,14 @@ static void fork_and_reboot ( const int cmd )
   }
 }
 
-static void sys_shutdown ( const int cmd )
+static void sys_shutdown ( const int fd, const int cmd )
 {
   char * what = NULL ;
+
+  /* close the input fifo */
+  if ( 0 <= fd ) {
+    (void) close_fd ( fd ) ;
+  }
 
   switch ( cmd ) {
     case RB_HALT_SYSTEM :
@@ -736,10 +741,10 @@ int main ( const int argc, char ** argv )
             case SIGHUP :
               break ;
             case SIGINT :
-              sys_shutdown ( RB_AUTOBOOT ) ;
+              sys_shutdown ( fifo_fd, RB_AUTOBOOT ) ;
               break ;
             case SIGTERM :
-              sys_shutdown ( RB_POWER_OFF ) ;
+              sys_shutdown ( fifo_fd, RB_POWER_OFF ) ;
               break ;
             case SIGQUIT :
               break ;
@@ -750,13 +755,13 @@ int main ( const int argc, char ** argv )
               pfd [ 1 ] . fd = fifo_fd ;
               break ;
             case SIGUSR2 :
-              sys_shutdown ( RB_AUTOBOOT ) ;
+              sys_shutdown ( fifo_fd, RB_AUTOBOOT ) ;
               break ;
             case SIGWINCH :
 #ifdef SIGPWR
             case SIGPWR :
 #endif
-              sys_shutdown ( RB_POWER_OFF ) ;
+              sys_shutdown ( fifo_fd, RB_POWER_OFF ) ;
               break ;
           }
         }
@@ -776,13 +781,13 @@ int main ( const int argc, char ** argv )
             fifo_fd = open_fifo ( INIT_FIFO ) ;
             pfd [ 1 ] . fd = fifo_fd ;
           } else if ( strcmp ( "reboot", buf ) == 0 ) {
-            sys_shutdown ( RB_AUTOBOOT ) ;
+            sys_shutdown ( fifo_fd, RB_AUTOBOOT ) ;
           } else if ( strcmp ( "poweroff", buf ) == 0 ) {
-            sys_shutdown ( RB_POWER_OFF ) ;
+            sys_shutdown ( fifo_fd, RB_POWER_OFF ) ;
           } else if ( strcmp ( "halt", buf ) == 0 ) {
-            sys_shutdown ( RB_HALT_SYSTEM ) ;
+            sys_shutdown ( fifo_fd, RB_HALT_SYSTEM ) ;
           } else if ( strcmp ( "kexec", buf ) == 0 ) {
-            sys_shutdown ( RB_KEXEC ) ;
+            sys_shutdown ( fifo_fd, RB_KEXEC ) ;
           } else if ( strcmp ( "reexec", buf ) == 0 ) {
           } else if ( strcmp ( "reload", buf ) == 0 ) {
           } else if ( strncmp ( "stop", buf, 4 ) == 0 ) {
