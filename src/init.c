@@ -51,7 +51,11 @@
 #include "version.h"
 #include "init.h"
 
-extern char ** environ ;
+enum {
+  P_DISABLE	= ( 1 << 0 ),
+  P_RESTART	= ( 1 << 1 ),
+  P_STALE	= ( 1 << 2 ),
+} ;
 
 static struct service {
   unsigned int flags ;
@@ -59,8 +63,10 @@ static struct service {
   ino_t ino ;
   pid_t pid ;
   time_t started_at ;
+  int restarted ;
 } svc [ SVC_LEN ] ;
 
+extern char ** environ ;
 static size_t maxidx = 0 ;
 static const char * pname = "init" ;
 
@@ -403,6 +409,7 @@ static size_t add_svc ( struct stat * sp, const char * name )
 
   if ( 0 <= i && SVC_LEN > i ) {
     svc [ i ] . flags = 0 ;
+    svc [ i ] . restarted = 0 ;
     svc [ i ] . dev = sp -> st_dev ;
     svc [ i ] . ino = sp -> st_ino ;
     svc [ i ] . pid = spawn_svc ( name ) ;
@@ -456,9 +463,18 @@ static void check_pid ( const pid_t pid )
     char buf [ 1 + NAME_MAX ] = { 0 } ;
 
     if ( 0 == search_svc_file ( SVC_ROOT, idx, buf, sizeof ( buf ) - 1 ) ) {
-      /* Don't respawn too fast */
-      do_sleep ( 1, 0 ) ;
-      svc [ idx ] . pid = spawn_svc ( buf ) ;
+      const time_t t = time ( NULL ) - svc [ idx ] . started_at ;
+
+      if ( 10 < svc [ idx ] . restarted && 120 > t ) {
+        /* This service respawns too fast */
+        (void) kill ( svc [ idx ] . pid, SIGTERM ) ;
+        svc [ idx ] . pid = 0 ;
+      } else {
+        /* Don't respawn too fast */
+        do_sleep ( 1, 0 ) ;
+        svc [ idx ] . pid = spawn_svc ( buf ) ;
+        ++ svc [ idx ] . restarted ;
+      }
     }
   }
 }
