@@ -473,7 +473,7 @@ static void check_pid ( const pid_t pid )
         /* Don't respawn too fast */
         do_sleep ( 1, 0 ) ;
         svc [ idx ] . pid = spawn_svc ( buf ) ;
-        ++ svc [ idx ] . restarted ;
+        svc [ idx ] . restarted += 1 ;
       }
     }
   }
