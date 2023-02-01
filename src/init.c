@@ -156,6 +156,24 @@ static void open_console ( void )
   }
 }
 
+static void open_io ( void )
+{
+  int fd = open ( "/dev/null", O_RDONLY | O_NOCTTY ) ;
+
+  if ( 0 <= fd ) {
+    (void) dup2 ( fd, 0 ) ;
+    if ( 0 < fd ) { (void) close_fd ( fd ) ; }
+  }
+
+  fd = open ( "/dev/console", O_WRONLY | O_NOCTTY ) ;
+
+  if ( 0 <= fd ) {
+    (void) dup2 ( fd, 1 ) ;
+    (void) dup2 ( fd, 2 ) ;
+    if ( 2 < fd ) { (void) close_fd ( fd ) ; }
+  }
+}
+
 /* change the active virtual console */
 static int chvt ( int vt )
 {
@@ -722,6 +740,8 @@ int main ( const int argc, char ** argv )
   (void) fcntl ( sfd [ 0 ], F_SETFL, O_NONBLOCK ) ;
   (void) fcntl ( sfd [ 1 ], F_SETFL, O_NONBLOCK ) ;
   sig_fd = sfd [ 1 ] ;
+
+  (void) printf ( "%s: Running stage 1 script...\n", pname ) ;
   (void) run ( STAGE1, STAGE1 ) ;
 
   fifo_fd = open_fifo ( INIT_FIFO ) ;
@@ -732,7 +752,9 @@ int main ( const int argc, char ** argv )
 
   setup_sigs () ;
   setup_kb () ;
+  (void) printf ( "%s: Starting services...\n", pname ) ;
   setup_svc ( SVC_ROOT ) ;
+  (void) printf ( "%s: Running stage 2 script...\n", pname ) ;
   (void) spawn ( STAGE2 ) ;
   (void) sig_unblock_all () ;
 
