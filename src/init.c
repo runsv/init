@@ -584,12 +584,13 @@ static void sys_shutdown ( const int fd, const int cmd )
   (void) run ( STAGE3, STAGE3, what ) ;
   reap () ;
   sync () ;
-  (void) puts ( "Sending all processes the TERM signal...\n" ) ;
+  (void) printf ( "%s: Sending all processes the TERM signal...\n", pname ) ;
   (void) kill ( -1, SIGTERM ) ;
+  (void) kill ( -1, SIGHUP ) ;
   (void) kill ( -1, SIGCONT ) ;
   do_sleep ( 2, 0 ) ;
   reap () ;
-  (void) puts ( "Sending all processes the KILL signal...\n" ) ;
+  (void) printf ( "%s: Sending all processes the KILL signal...\n", pname ) ;
   (void) kill ( -1, SIGKILL ) ;
   reap () ;
   sync () ;
@@ -597,7 +598,8 @@ static void sys_shutdown ( const int fd, const int cmd )
   reap () ;
   sync () ;
 
-  { struct stat sb ;
+  {
+    struct stat sb ;
 
     if ( stat ( STAGE5, & sb ) ) {
       ;
