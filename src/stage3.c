@@ -89,7 +89,7 @@ static void fork_and_reboot ( const int cmd )
 
 int main ( const int argc, char ** argv )
 {
-  int ch = 0 ;
+  int opt = 0 ;
   int cmd = RB_POWER_OFF ;
   int secs = 2 ;
   char * what = NULL ;
@@ -103,9 +103,10 @@ int main ( const int argc, char ** argv )
   /*
   (void) setenv ( "PATH", PATH, 1 ) ;
   */
+  open_console () ;
 
-  while ( ( ch = getopt ( argc, argv, ":hkprs:x:" ) ) != -1 ) {
-    switch ( ch ) {
+  while ( ( opt = getopt ( argc, argv, ":hkprs:x:" ) ) != -1 ) {
+    switch ( opt ) {
       case 'h' :
         cmd = RB_HALT_SYSTEM ;
         break ;

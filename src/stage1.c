@@ -55,6 +55,29 @@ static const char * pname = "init" ;
 
 #include "common.c"
 
+static pid_t spawn ( const char * path )
+{
+  char * av [ 2 ] = { (char *) path, (char *) NULL } ;
+  char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
+  const pid_t pid = xfork () ;
+
+  if ( 0 == pid ) {
+    //(void) sig_unblock_all () ;
+    (void) setsid () ;
+    (void) execve ( path, av, env ) ;
+    exit ( 127 ) ;
+  }
+
+  return pid ;
+}
+
+static void exec_svscan ( char * svscan )
+{
+  char * av [ 3 ] = { svscan, SCAN_DIR, (char *) NULL } ;
+  char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
+  (void) execve ( svscan, av, env ) ;
+}
+
 static void setup_kb ( void )
 {
   const int fd = open ( "/dev/tty0", O_RDONLY | O_NOCTTY ) ;
@@ -86,18 +109,16 @@ int main ( const int argc, char ** argv )
   (void) umask ( 0022 ) ;
   (void) chdir ( "/" ) ;
   (void) sethostname ( "darkstar", 8 ) ;
+  /*
   (void) setenv ( "PATH", PATH, 1 ) ;
+  */
 
   (void) run ( STAGE1, STAGE1 ) ;
   (void) mkdir ( SCAN_DIR, 00755 ) ;
   (void) mkdir ( LOG_SERVICE, 00755 ) ;
   (void) mkfifo ( LOG_SERVICE "/fifo", 00600 ) ;
-
-  {
-    char * av [ 3 ] = { SVSCAN, SCAN_DIR, (char *) NULL } ;
-    char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
-    (void) execve ( SVSCAN, av, env ) ;
-  }
+  (void) spawn ( STAGE2 ) ;
+  exec_svscan ( SVSCAN ) ;
 
   return 111 ;
 }

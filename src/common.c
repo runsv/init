@@ -116,7 +116,9 @@ static int run ( char * cmd, ... )
     }
     */
 
+    /*
     (void) sig_unblock_all () ;
+    */
     (void) setsid () ;
     /* opendevconsole() ? */
     (void) execve ( cmd, argv, env ) ;
