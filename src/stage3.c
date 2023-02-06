@@ -65,6 +65,19 @@ static void reap ( void )
   return ;
 }
 
+static void exec_stage5 ( char * stage5, char * what )
+{
+  struct stat sb ;
+
+  if ( stat ( stage5, & sb ) ) {
+    ;
+  } else if ( S_ISREG ( sb . st_mode ) && ( 00100 & sb . st_mode ) ) {
+    char * av [ 3 ] = { stage5, what, (char *) NULL } ;
+    char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
+    (void) execve ( stage5, av, env ) ;
+  }
+}
+
 static void fork_and_reboot ( const int cmd )
 {
   const pid_t pid = xfork () ;
@@ -176,19 +189,7 @@ int main ( const int argc, char ** argv )
   (void) run ( STAGE4, STAGE4, what ) ;
   reap () ;
   sync () ;
-
-  {
-    struct stat sb ;
-
-    if ( stat ( stage5, & sb ) ) {
-      ;
-    } else if ( S_ISREG ( sb . st_mode ) && ( 00100 & sb . st_mode ) ) {
-      char * av [ 3 ] = { stage5, what, (char *) NULL } ;
-      char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
-      (void) execve ( stage5, av, env ) ;
-    }
-  }
-
+  exec_stage5 ( stage5, what ) ;
   sync () ;
   fork_and_reboot ( cmd ) ;
 
