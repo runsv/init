@@ -222,18 +222,21 @@ static int run ( char * cmd, ... )
 {
   int i ;
   pid_t pid ;
-  char * argv [ 10 ] ;
+  char * av [ 10 ] = { (char *) NULL } ;
+  char * env [ 2 ] = {
+    "PATH=" PATH,
+    (char *) NULL,
+  } ;
 
   va_list arguments ;
-
   va_start ( arguments, cmd ) ;
 
   for ( i = 0 ;
-    i < 9 && ( argv [ i ] = va_arg ( arguments, char * ) ) != NULL ;
+    i < 9 && ( av [ i ] = va_arg ( arguments, char * ) ) != NULL ;
     ++ i ) ;
 
   va_end ( arguments ) ;
-  argv [ i ] = NULL ;
+  av [ i ] = NULL ;
   pid = xfork () ;
 
   if ( 0 > pid ) {
@@ -249,11 +252,6 @@ static int run ( char * cmd, ... )
     } while ( ( 0 > p ) && ( EINTR == errno ) ) ;
   } else if ( 0 == pid ) {
     /* child */
-    char * env [ 2 ] = {
-      "PATH=" PATH,
-      (char *) NULL,
-    } ;
-
     /*
     char * s = getenv ( "TERM" ) ;
 
@@ -264,7 +262,7 @@ static int run ( char * cmd, ... )
     (void) sig_unblock_all () ;
     (void) setsid () ;
     /* opendevconsole() ? */
-    (void) execve ( cmd, argv, env ) ;
+    (void) execve ( cmd, av, env ) ;
     perror ( "execve() failed" ) ;
     exit ( 127 ) ;
   }
@@ -303,7 +301,7 @@ static void setup_kb ( void )
   }
 
   /* don't panic on early cad before s6-svscan catches it */
-  //sig_block ( SIGINT ) ;
+  /* sig_block ( SIGINT ) ; */
   if ( reboot ( RB_DISABLE_CAD ) ) {
     (void) fputs ( "Cannot trap ctrl-alt-del", stderr ) ;
   }

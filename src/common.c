@@ -76,7 +76,7 @@ static int run ( char * cmd, ... )
 {
   int i ;
   pid_t pid ;
-  char * argv [ 10 ] ;
+  char * av [ 10 ] = { (char *) NULL } ;
   char * env [ 3 ] = {
     "PATH=" PATH,
     "TERM=linux",
@@ -84,15 +84,14 @@ static int run ( char * cmd, ... )
   } ;
 
   va_list arguments ;
-
   va_start ( arguments, cmd ) ;
 
   for ( i = 0 ;
-    i < 9 && ( argv [ i ] = va_arg ( arguments, char * ) ) != NULL ;
+    i < 9 && ( av [ i ] = va_arg ( arguments, char * ) ) != NULL ;
     ++ i ) ;
 
   va_end ( arguments ) ;
-  argv [ i ] = NULL ;
+  av [ i ] = NULL ;
   pid = xfork () ;
 
   if ( 0 > pid ) {
@@ -113,7 +112,7 @@ static int run ( char * cmd, ... )
     */
     (void) setsid () ;
     /* opendevconsole() ? */
-    (void) execve ( cmd, argv, env ) ;
+    (void) execve ( cmd, av, env ) ;
     perror ( "execve() failed" ) ;
     exit ( 127 ) ;
   }

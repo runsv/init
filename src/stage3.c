@@ -44,12 +44,6 @@
 #include "version.h"
 #include "common.h"
 
-enum {
-  P_DISABLE	= ( 1 << 0 ),
-  P_RESTART	= ( 1 << 1 ),
-  P_STALE	= ( 1 << 2 ),
-} ;
-
 extern char ** environ ;
 
 #include "common.c"
@@ -118,17 +112,21 @@ int main ( const int argc, char ** argv )
   */
   open_console () ;
 
-  while ( ( opt = getopt ( argc, argv, ":hkprs:x:" ) ) != -1 ) {
+  while ( ( opt = getopt ( argc, argv, ":HhKkPpRrs:x:" ) ) != -1 ) {
     switch ( opt ) {
+      case 'H' :
       case 'h' :
         cmd = RB_HALT_SYSTEM ;
         break ;
+      case 'K' :
       case 'k' :
         cmd = RB_KEXEC ;
         break ;
+      case 'P' :
       case 'p' :
         cmd = RB_POWER_OFF ;
         break ;
+      case 'R' :
       case 'r' :
         cmd = RB_AUTOBOOT ;
         break ;

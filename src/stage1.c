@@ -44,12 +44,6 @@
 #include "version.h"
 #include "common.h"
 
-enum {
-  P_DISABLE	= ( 1 << 0 ),
-  P_RESTART	= ( 1 << 1 ),
-  P_STALE	= ( 1 << 2 ),
-} ;
-
 extern char ** environ ;
 static const char * pname = "init" ;
 
@@ -101,19 +95,22 @@ static void setup_kb ( void )
   const int fd = open ( "/dev/tty0", O_RDONLY | O_NOCTTY ) ;
 
   if ( 0 > fd ) {
-    (void) fputs ( "INIT: Cannot open /dev/tty0 (kbrequest will not be handled)", stderr ) ;
+    perror ( "open() failed" ) ;
+    (void) fprintf ( stderr, "%s: Cannot open /dev/tty0 (kbrequest will not be handled)\n", pname ) ;
   } else {
     if ( ioctl ( fd, KDSIGACCEPT, SIGWINCH ) < 0 ) {
-      (void) fputs ( "INIT: ioctl KDSIGACCEPT on /dev/tty0 failed (kbrequest will not be handled)", stderr ) ;
+      perror ( "ioctl() failed" ) ;
+      (void) fprintf ( stderr, "%s: ioctl KDSIGACCEPT on /dev/tty0 failed (kbrequest will not be handled)\n", pname ) ;
     }
 
     close_fd ( fd ) ;
   }
 
   /* don't panic on early cad before s6-svscan catches it */
-  //sig_block ( SIGINT ) ;
+  /* sig_block ( SIGINT ) ; */
   if ( reboot ( RB_DISABLE_CAD ) ) {
-    (void) fputs ( "Cannot trap ctrl-alt-del", stderr ) ;
+    perror ( "reboot() failed" ) ;
+    (void) fprintf ( stderr, "%s: Cannot trap ctrl-alt-del\n", pname ) ;
   }
 }
 
