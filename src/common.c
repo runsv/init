@@ -77,6 +77,11 @@ static int run ( char * cmd, ... )
   int i ;
   pid_t pid ;
   char * argv [ 10 ] ;
+  char * env [ 3 ] = {
+    "PATH=" PATH,
+    "TERM=linux",
+    (char *) NULL,
+  } ;
 
   va_list arguments ;
 
@@ -103,19 +108,6 @@ static int run ( char * cmd, ... )
     } while ( ( 0 > p ) && ( EINTR == errno ) ) ;
   } else if ( 0 == pid ) {
     /* child */
-    char * env [ 3 ] = {
-      "PATH=" PATH,
-      "TERM=linux",
-      (char *) NULL,
-    } ;
-
-    /*
-    char * s = getenv ( "TERM" ) ;
-
-    if ( s && * s ) {
-    }
-    */
-
     /*
     (void) sig_unblock_all () ;
     */

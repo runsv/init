@@ -3,10 +3,10 @@
 #define _HEADER_COMMON_H_	1
 
 #define PATH		"/bin:/sbin:/usr/bin:/usr/sbin"
-#define INIT_FIFO	"/run/initfifo"
 #define SVSCAN		"/bin/s6-svscan"
 #define SCAN_DIR	"/run/service"
 #define LOG_SERVICE	SCAN_DIR "/Log"
+#define LOG_FIFO	LOG_SERVICE "/fifo"
 #define BASE_DIR	"/etc/s6"
 #define STAGE1		BASE_DIR "/rc1"
 #define STAGE2		BASE_DIR "/rc2"

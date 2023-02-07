@@ -55,6 +55,24 @@ static const char * pname = "init" ;
 
 #include "common.c"
 
+static void open_io ( void )
+{
+  int fd = open ( "/dev/null", O_RDONLY | O_NOCTTY ) ;
+
+  if ( 0 <= fd ) {
+    (void) dup2 ( fd, 0 ) ;
+    if ( 0 < fd ) { (void) close_fd ( fd ) ; }
+  }
+
+  fd = open ( "/dev/console", O_WRONLY | O_NOCTTY ) ;
+
+  if ( 0 <= fd ) {
+    (void) dup2 ( fd, 1 ) ;
+    (void) dup2 ( fd, 2 ) ;
+    if ( 2 < fd ) { (void) close_fd ( fd ) ; }
+  }
+}
+
 static pid_t spawn ( const char * path )
 {
   char * av [ 2 ] = { (char *) path, (char *) NULL } ;
@@ -113,11 +131,14 @@ int main ( const int argc, char ** argv )
   (void) setenv ( "PATH", PATH, 1 ) ;
   */
 
+  open_console () ;
   (void) run ( STAGE1, STAGE1 ) ;
   (void) mkdir ( SCAN_DIR, 00755 ) ;
   (void) mkdir ( LOG_SERVICE, 00755 ) ;
-  (void) mkfifo ( LOG_SERVICE "/fifo", 00600 ) ;
+  (void) mkfifo ( LOG_FIFO, 00600 ) ;
   (void) spawn ( STAGE2 ) ;
+  open_io () ;
+  setup_kb () ;
   exec_svscan ( SVSCAN ) ;
 
   return 111 ;
