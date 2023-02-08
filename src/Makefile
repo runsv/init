@@ -107,13 +107,13 @@ testinit :	reboot.o testinit.o
 	@echo "  LD	$@"
 	$(CROSS)$(LD) $(LDFLAGS) -o $@ $^
 
-stage1 :	stage1.o
-	@echo "  LD	$@"
-	$(CROSS)$(LD) $(LDFLAGS) -o $@ $^
+stage1 :	stage1.c
+	@echo "  CCLD	$@"
+	$(CROSS)$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $^
 
-stage3 :	stage3.o
-	@echo "  LD	$@"
-	$(CROSS)$(LD) $(LDFLAGS) -o $@ $^
+stage3 :	stage3.c
+	@echo "  CCLD	$@"
+	$(CROSS)$(CC) $(LDFLAGS) $(CFLAGS) -o $@ $^
 
 oinid :		$(inid_obj)
 	@echo "  LD	$@"
