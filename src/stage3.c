@@ -70,6 +70,8 @@ static void exec_stage5 ( char * stage5, char * what )
     char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
     (void) execve ( stage5, av, env ) ;
   }
+
+  return ;
 }
 
 static void fork_and_reboot ( const int cmd )
@@ -92,6 +94,8 @@ static void fork_and_reboot ( const int cmd )
     } while ( ( 0 > p ) && ( EINTR == p ) ) ;
   } else if ( 0 > pid ) {
   }
+
+  return ;
 }
 
 int main ( const int argc, char ** argv )

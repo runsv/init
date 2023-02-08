@@ -65,6 +65,8 @@ static void open_io ( void )
     (void) dup2 ( fd, 2 ) ;
     if ( 2 < fd ) { (void) close_fd ( fd ) ; }
   }
+
+  return ;
 }
 
 static pid_t spawn ( const char * path )
@@ -83,11 +85,13 @@ static pid_t spawn ( const char * path )
   return pid ;
 }
 
-static void exec_svscan ( char * svscan )
+static void exec_svscan ( char * svscan, char * scandir )
 {
-  char * av [ 3 ] = { svscan, SCAN_DIR, (char *) NULL } ;
+  char * av [ 3 ] = { svscan, scandir, (char *) NULL } ;
   char * env [ 2 ] = { "PATH=" PATH, (char *) NULL } ;
   (void) execve ( svscan, av, env ) ;
+
+  return ;
 }
 
 static void setup_kb ( void )
@@ -112,6 +116,8 @@ static void setup_kb ( void )
     perror ( "reboot() failed" ) ;
     (void) fprintf ( stderr, "%s: Cannot trap ctrl-alt-del\n", pname ) ;
   }
+
+  return ;
 }
 
 int main ( const int argc, char ** argv )
@@ -136,7 +142,7 @@ int main ( const int argc, char ** argv )
   (void) spawn ( STAGE2 ) ;
   open_io () ;
   setup_kb () ;
-  exec_svscan ( SVSCAN ) ;
+  exec_svscan ( SVSCAN, SCAN_DIR ) ;
 
   return 111 ;
 }

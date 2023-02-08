@@ -107,11 +107,11 @@ testinit :	reboot.o testinit.o
 	@echo "  LD	$@"
 	$(CROSS)$(LD) $(LDFLAGS) -o $@ $^
 
-stage2 :	reboot.o stage2.o
+stage1 :	stage1.o
 	@echo "  LD	$@"
 	$(CROSS)$(LD) $(LDFLAGS) -o $@ $^
 
-stage3 :	reboot.o stage3.o
+stage3 :	stage3.o
 	@echo "  LD	$@"
 	$(CROSS)$(LD) $(LDFLAGS) -o $@ $^
 

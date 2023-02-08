@@ -2,6 +2,7 @@
  * public domain
  */
 
+/*
 static size_t strcopy ( char * dest, const char * src, const size_t siz )
 {
   size_t i ;
@@ -16,6 +17,7 @@ static size_t strcopy ( char * dest, const char * src, const size_t siz )
 
   return i ;
 }
+*/
 
 static int close_fd ( const int fd )
 {
@@ -45,6 +47,8 @@ static void do_sleep ( long int s, long int m )
     while ( ( 0 > nanosleep ( & ts, & rem ) ) && ( EINTR == errno ) )
     { ts = rem ; }
   }
+
+  return ;
 }
 
 /* "failsafe" version of the fork(2) syscall */
@@ -70,6 +74,8 @@ static void open_console ( void )
     (void) dup2 ( fd, 2 ) ;
     if ( 2 < fd ) { (void) close_fd ( fd ) ; }
   }
+
+  return ;
 }
 
 static int run ( char * cmd, ... )
