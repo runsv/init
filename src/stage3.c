@@ -195,6 +195,8 @@ int main ( const int argc, char ** argv )
   sync () ;
   fork_and_reboot ( cmd ) ;
 
+  while ( 1 ) { pause () ; }
+
   return 0 ;
 }
 

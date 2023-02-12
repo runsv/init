@@ -5,7 +5,7 @@
 /*
 #define VERSION		"0.0.1.3"
 */
-#define SVC_LEN		200
+#define SVC_LEN		50
 #define INIT_FIFO	"/run/initfifo"
 #define BASE_DIR	"/etc/rc"
 #define SVC_ROOT	BASE_DIR "/sv"
