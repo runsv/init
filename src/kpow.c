@@ -12,6 +12,7 @@
 int main ( const int argc, char * argv [] )
 {
   char what = 'p' ;
+  int cmd = RB_POWER_OFF ;
 
   if ( geteuid () > 0 ) {
     (void) puts ( "Error: kpow must be run as root\n" ) ;
@@ -22,29 +23,39 @@ int main ( const int argc, char * argv [] )
     if ( argv [ 1 ] [ 0 ] ) { what = argv [ 1 ] [ 0 ] ; }
   }
 
-  sync () ;
-
   switch ( what ) {
     case 'K' :
     case 'k' :
-      (void) reboot ( RB_KEXEC ) ;
+      cmd = RB_KEXEC ;
+      break ;
+
+    case 'S' :
+    case 's' :
+      cmd = RB_SW_SUSPEND ;
       break ;
 
     case 'H' :
     case 'h' :
-      (void) reboot ( RB_HALT_SYSTEM ) ;
+      cmd = RB_HALT_SYSTEM ;
       break ;
 
     case 'R' :
     case 'r' :
-      (void) reboot ( RB_AUTOBOOT ) ;
+      cmd = RB_AUTOBOOT ;
       break ;
 
     case 'P' :
     case 'p' :
     default :
-      (void) reboot ( RB_POWER_OFF ) ;
+      cmd = RB_POWER_OFF ;
       break ;
+  }
+
+  sync () ;
+
+  if ( reboot ( cmd ) ) {
+    perror ( "reboot() failed" ) ;
+    return 111 ;
   }
 
   return 0 ;
