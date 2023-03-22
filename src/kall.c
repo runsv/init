@@ -5,8 +5,9 @@
 */
 
 #define _POSIX_C_SOURCE 200809L
-#include <ctype.h>
+#include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <inttypes.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -22,13 +23,14 @@ int main ( const int argc, char * argv [] )
   const int mysid = getsid ( 0 ) ;
 
   if ( 1 < argc ) {
-    const int s = strtoimax ( argv [ 1 ], 0, 10 ) ;
-    if ( 0 < s && s < _NSIG ) { sig = s ; }
+    const int s = atoi ( argv [ 1 ] ) ;
+    if ( 0 < s && s <= _NSIG ) { sig = s ; }
   }
 
   dir = opendir ( "/proc" ) ;
 
   if ( NULL == dir ) {
+    perror ( "Could not open /proc" ) ;
     return 111 ;
   }
 
@@ -39,7 +41,7 @@ int main ( const int argc, char * argv [] )
       continue ;
     }
 
-    pid = strtoimax ( ent -> d_name, 0, 10 ) ;
+    pid = atoi ( ent -> d_name ) ;
 
     if ( 2 > pid ) {
       continue ;
