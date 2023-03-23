@@ -43,7 +43,7 @@ int main ( const int argc, char * argv [] )
 
     pid = atoi ( ent -> d_name ) ;
 
-    if ( 2 > pid ) {
+    if ( 2 >= pid ) {
       continue ;
     }
 
